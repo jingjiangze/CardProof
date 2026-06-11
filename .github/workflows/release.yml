@@ -16,12 +16,17 @@ permissions:
 
 jobs:
   release:
-    name: Package CardProof
+    name: Build and package CardProof
     runs-on: windows-latest
 
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
       - name: Set release version
         shell: pwsh
@@ -39,11 +44,24 @@ jobs:
         shell: pwsh
         run: node --check server.js
 
-      - name: Build release archive
+      - name: Install desktop build tools
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-desktop.txt
+          choco install innosetup --no-progress -y
+
+      - name: Build desktop executable
+        shell: pwsh
+        run: |
+          pyinstaller --noconfirm --clean .\CardProof.spec
+          Copy-Item -Force .\app_config.example.json .\dist\app_config.example.json
+
+      - name: Build source archive
         shell: pwsh
         run: |
           $stage = Join-Path $env:RUNNER_TEMP "CardProof"
-          $archive = Join-Path $env:RUNNER_TEMP "CardProof-$env:RELEASE_VERSION.zip"
+          $archive = Join-Path $env:RUNNER_TEMP "CardProof-Source-$env:RELEASE_VERSION.zip"
 
           if (Test-Path $stage) {
             Remove-Item -LiteralPath $stage -Recurse -Force
@@ -55,7 +73,13 @@ jobs:
             "README.md",
             "README.bilingual.md",
             "app_config.example.json",
+            "CardProof.spec",
+            "desktop_app.py",
+            "desktop_app_impl.pyc",
+            "installer",
             "package.json",
+            "requirements-desktop.txt",
+            "run_desktop.bat",
             "server.js",
             "start.bat",
             "start.local.example.ps1",
@@ -70,17 +94,37 @@ jobs:
           }
 
           Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $archive -Force
-          "ARCHIVE_PATH=$archive" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "SOURCE_ARCHIVE_PATH=$archive" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Build portable executable archive
+        shell: pwsh
+        run: |
+          $portable = Join-Path $env:RUNNER_TEMP "CardProof-Portable-$env:RELEASE_VERSION.zip"
+          Compress-Archive -Path ".\dist\CardProof.exe", ".\dist\app_config.example.json" -DestinationPath $portable -Force
+          "PORTABLE_ARCHIVE_PATH=$portable" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          $appVersion = $env:RELEASE_VERSION.TrimStart("v")
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          & $iscc "/DAppVersion=$appVersion" "/DSourceDir=$pwd\dist" "/DRepoDir=$pwd" ".\installer\CardProof.iss"
+          $installer = Join-Path $pwd "dist\CardProof-Setup-v$appVersion.exe"
+          "INSTALLER_PATH=$installer" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.RELEASE_VERSION }}
           name: CardProof ${{ env.RELEASE_VERSION }}
-          files: ${{ env.ARCHIVE_PATH }}
+          files: |
+            ${{ env.SOURCE_ARCHIVE_PATH }}
+            ${{ env.PORTABLE_ARCHIVE_PATH }}
+            ${{ env.INSTALLER_PATH }}
           body: |
-            CardProof packaged source release.
+            CardProof Windows release.
 
-            - Includes the local web app source and startup scripts.
+            - `CardProof-Setup-*.exe` is the Windows installer.
+            - `CardProof-Portable-*.zip` contains the standalone executable.
+            - `CardProof-Source-*.zip` contains the buildable source package.
             - Excludes local secrets, cache files, build output, and customer files.
-            - Copy `start.local.example.ps1` to `start.local.ps1`, fill in your API settings, then run `start.ps1`.

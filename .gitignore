@@ -8,20 +8,22 @@ app_config.json
 # Runtime data and user/order files
 cache/
 *.log
+self_test.json
 
 # Build outputs
 build/
 dist/
 *.exe
 *.spec
+!CardProof.spec
 
 # Python bytecode
 __pycache__/
 *.py[cod]
+!desktop_app_impl.pyc
 
 # OS/editor files
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
-
