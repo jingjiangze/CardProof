@@ -1,0 +1,6 @@
+$env:DAV_URL = "http://127.0.0.1:5244/dav"
+$env:DAV_USER = "your-webdav-user"
+$env:DAV_PASS = "your-webdav-password"
+$env:OPENAI_BASE_URL = "https://api.openai.com/v1"
+$env:OPENAI_API_KEY = "your-openai-api-key"
+$env:PORT = "4173"

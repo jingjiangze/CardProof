@@ -1,0 +1,6 @@
+{
+  "source_mode": "local",
+  "openai_base_url": "https://api.openai.com/v1",
+  "openai_model": "gpt-4.1-mini"
+}
+

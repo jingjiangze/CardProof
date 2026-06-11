@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>名片 AI 核稿</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workbench">
+        <aside class="panel order-panel">
+          <div class="orders-head">
+            <div>
+              <p class="eyebrow">今日订单</p>
+              <h2>订单列表</h2>
+            </div>
+            <button id="refreshOrdersBtn" class="icon-btn" title="刷新订单">刷新</button>
+          </div>
+          <input id="orderSearch" class="search-input" type="search" placeholder="搜索订单号 / 文件夹名" />
+          <div id="orderSummary" class="order-summary">读取今天修改过的 JPG</div>
+          <div id="orderList" class="order-list"></div>
+        </aside>
+
+        <div class="panel source-panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">客户原稿 / 自动目录</p>
+              <h1>名片 AI 核稿</h1>
+            </div>
+            <div class="action-row">
+              <button id="stopBtn" class="danger-btn" type="button">停止服务</button>
+              <button id="todayBtn" class="secondary-btn">检查选中订单</button>
+              <button id="runBtn" class="primary-btn">一键核稿</button>
+            </div>
+          </div>
+
+          <label class="field-label" for="sourceText">客户确认文字</label>
+          <textarea id="sourceText" spellcheck="false" placeholder="例：&#10;姓名：张三&#10;职位：销售经理&#10;电话：138 0000 0000&#10;公司：某某科技有限公司&#10;地址：……"></textarea>
+
+          <label class="field-label" for="notes">特别要求</label>
+          <textarea id="notes" class="small" spellcheck="false" placeholder="例：二维码必须能扫；正反面都要有 logo；烫金版单独检查。自动检查会读取 WebDAV 中今天修改过的 JPG。"></textarea>
+
+          <div class="dropzone" id="dropzone">
+            <input id="fileInput" type="file" accept="image/*,application/pdf,.pdf" multiple />
+            <div>
+              <strong>拖入 JPG、PNG、截图或 PDF</strong>
+              <span>建议同时上传“客户确认版”和“当前导出版”，AI 会帮你看有没有误删元素。</span>
+            </div>
+          </div>
+
+          <div id="fileList" class="file-list"></div>
+        </div>
+
+        <div class="panel result-panel">
+          <div class="result-top">
+            <p class="eyebrow">核稿报告</p>
+            <span id="statusPill" class="status-pill">等待上传</span>
+          </div>
+
+          <div id="emptyState" class="empty-state">
+            <h2>把客户文字和设计图放进来</h2>
+            <p>AI 会按文字错误、元素缺失、印前风险三条线给你列清单。</p>
+          </div>
+
+          <div id="report" class="report hidden"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

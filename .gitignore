@@ -1,0 +1,27 @@
+# Local secrets and machine-specific config
+start.local.ps1
+.env
+.env.*
+*.local
+app_config.json
+
+# Runtime data and user/order files
+cache/
+*.log
+
+# Build outputs
+build/
+dist/
+*.exe
+*.spec
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
