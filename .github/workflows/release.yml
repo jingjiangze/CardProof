@@ -1,0 +1,86 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version, for example v1.0.0"
+        required: true
+        default: "v1.0.0"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Package CardProof
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set release version
+        shell: pwsh
+        run: |
+          $version = "${{ github.event.inputs.version }}"
+          if (-not $version) {
+            $version = "${{ github.ref_name }}"
+          }
+          if (-not $version.StartsWith("v")) {
+            $version = "v$version"
+          }
+          "RELEASE_VERSION=$version" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Check server syntax
+        shell: pwsh
+        run: node --check server.js
+
+      - name: Build release archive
+        shell: pwsh
+        run: |
+          $stage = Join-Path $env:RUNNER_TEMP "CardProof"
+          $archive = Join-Path $env:RUNNER_TEMP "CardProof-$env:RELEASE_VERSION.zip"
+
+          if (Test-Path $stage) {
+            Remove-Item -LiteralPath $stage -Recurse -Force
+          }
+          New-Item -ItemType Directory -Path $stage | Out-Null
+
+          $items = @(
+            ".gitignore",
+            "README.md",
+            "README.bilingual.md",
+            "app_config.example.json",
+            "package.json",
+            "server.js",
+            "start.bat",
+            "start.local.example.ps1",
+            "start.ps1",
+            "stop.bat",
+            "stop.ps1",
+            "public"
+          )
+
+          foreach ($item in $items) {
+            Copy-Item -LiteralPath $item -Destination $stage -Recurse -Force
+          }
+
+          Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $archive -Force
+          "ARCHIVE_PATH=$archive" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_VERSION }}
+          name: CardProof ${{ env.RELEASE_VERSION }}
+          files: ${{ env.ARCHIVE_PATH }}
+          body: |
+            CardProof packaged source release.
+
+            - Includes the local web app source and startup scripts.
+            - Excludes local secrets, cache files, build output, and customer files.
+            - Copy `start.local.example.ps1` to `start.local.ps1`, fill in your API settings, then run `start.ps1`.
