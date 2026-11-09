@@ -237,3 +237,11 @@ The workflow builds:
 ### Security
 
 Do not publish local secrets, cache files, build outputs, or customer artwork. Keep `start.local.ps1`, `.env`, `cache/`, `build/`, `dist/`, and order files private.
+
+## License
+
+Released under the **GNU General Public License v3.0 or later** (`GPL-3.0-or-later`); full text in [`LICENSE`](LICENSE).
+
+Copyright (C) 2026 jingjiangze
+
+You may use, modify and redistribute this software, but any distributed derivative must be released under the same license with corresponding source. Provided WITHOUT ANY WARRANTY.
